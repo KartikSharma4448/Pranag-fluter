@@ -1,0 +1,24 @@
+# Root repository now hosts Flutter app in flutter_mobile/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+
+# Flutter generated (inside subproject)
+flutter_mobile/.dart_tool/
+flutter_mobile/.flutter-plugins
+flutter_mobile/.flutter-plugins-dependencies
+flutter_mobile/.packages
+flutter_mobile/.pub-cache/
+flutter_mobile/.pub/
+flutter_mobile/build/
+flutter_mobile/coverage/
+flutter_mobile/**/doc/api/
+flutter_mobile/**/ios/Flutter/.last_build_id
+
+# IDE metadata
+flutter_mobile/.idea/
+flutter_mobile/*.iml
