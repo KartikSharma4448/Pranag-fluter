@@ -4,6 +4,10 @@ import "package:material_design_icons_flutter/material_design_icons_flutter.dart
 import "../models/app_models.dart";
 import "../state/app_state.dart";
 import "../theme/app_colors.dart";
+import "edit_profile_screen.dart";
+import "help_support_screen.dart";
+import "privacy_policy_screen.dart";
+import "settings_screen.dart";
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.appState});
@@ -28,9 +32,9 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildStats(user),
                   const SizedBox(height: 24),
-                  _buildContactCard(user.phone),
+                  _buildContactCard(user),
                   const SizedBox(height: 20),
-                  _buildMoreOptions(),
+                  _buildMoreOptions(context),
                   const SizedBox(height: 16),
                   _buildBrandCard(),
                   const SizedBox(height: 16),
@@ -94,7 +98,13 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.edit_outlined,
               text: "Edit Profile",
               color: AppColors.primary,
-              onTap: () => _openProfileEditor(context, user),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => EditProfileScreen(appState: appState),
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 10),
             _HeaderButton(
@@ -102,9 +112,9 @@ class ProfileScreen extends StatelessWidget {
               text: "Settings",
               color: AppColors.gold,
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Settings screen will be added in next phase."),
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const SettingsScreen(),
                   ),
                 );
               },
@@ -112,111 +122,6 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-
-  Future<void> _openProfileEditor(
-    BuildContext context,
-    UserProfile user,
-  ) async {
-    final nameController = TextEditingController(text: user.name);
-    final roleController = TextEditingController(text: user.role);
-    final phoneController = TextEditingController(text: user.phone);
-    final membershipController = TextEditingController(text: user.membership);
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            16 + MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Edit Profile",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.text,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _ProfileField(
-                  label: "Name",
-                  controller: nameController,
-                ),
-                const SizedBox(height: 10),
-                _ProfileField(
-                  label: "Role",
-                  controller: roleController,
-                ),
-                const SizedBox(height: 10),
-                _ProfileField(
-                  label: "Phone",
-                  controller: phoneController,
-                ),
-                const SizedBox(height: 10),
-                _ProfileField(
-                  label: "Membership",
-                  controller: membershipController,
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final name = nameController.text.trim();
-                      final role = roleController.text.trim();
-                      final phone = phoneController.text.trim();
-                      final membership = membershipController.text.trim();
-
-                      if (name.isEmpty ||
-                          role.isEmpty ||
-                          phone.isEmpty ||
-                          membership.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Please fill all fields."),
-                          ),
-                        );
-                        return;
-                      }
-
-                      appState.updateUserProfile(
-                        name: name,
-                        role: role,
-                        phone: phone,
-                        membership: membership,
-                      );
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                    ),
-                    child: const Text("Save"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -253,31 +158,42 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactCard(String phone) {
+  Widget _buildContactCard(UserProfile user) {
     return _Section(
       title: "Contact Information",
       child: Column(
         children: [
-          const _InfoRow(icon: Icons.location_on_outlined, label: "Not provided"),
+          _InfoRow(
+            icon: Icons.location_on_outlined,
+            label: user.location.isEmpty ? "Not provided" : user.location,
+          ),
           const _DividerLine(),
-          _InfoRow(icon: Icons.call_outlined, label: phone),
+          _InfoRow(icon: Icons.call_outlined, label: user.phone),
           const _DividerLine(),
-          const _InfoRow(icon: Icons.mail_outline, label: "Not provided"),
+          _InfoRow(
+            icon: Icons.mail_outline,
+            label: user.email.isEmpty ? "Not provided" : user.email,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMoreOptions() {
+  Widget _buildMoreOptions(BuildContext context) {
     return _Section(
       title: "More Options",
-      child: const Column(
+      child: Column(
         children: [
           _MenuRow(
             icon: Icons.emoji_events_outlined,
             iconColor: AppColors.gold,
             title: "Achievements",
             subtitle: "Health milestones & records",
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Achievements will be added soon.")),
+              );
+            },
           ),
           _DividerLine(),
           _MenuRow(
@@ -285,6 +201,11 @@ class ProfileScreen extends StatelessWidget {
             iconColor: AppColors.primary,
             title: "Device Info",
             subtitle: "TinyML status & diagnostics",
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Device diagnostics coming soon.")),
+              );
+            },
           ),
           _DividerLine(),
           _MenuRow(
@@ -292,6 +213,13 @@ class ProfileScreen extends StatelessWidget {
             iconColor: Color(0xFF2196F3),
             title: "Help & Support",
             subtitle: "FAQs and contact support",
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const HelpSupportScreen(),
+                ),
+              );
+            },
           ),
           _DividerLine(),
           _MenuRow(
@@ -299,6 +227,13 @@ class ProfileScreen extends StatelessWidget {
             iconColor: AppColors.textSecondary,
             title: "Terms & Privacy",
             subtitle: "Legal information",
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const PrivacyPolicyScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -369,7 +304,9 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildLogoutButton() {
     return InkWell(
-      onTap: appState.logout,
+      onTap: () {
+        appState.logout();
+      },
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: double.infinity,
@@ -560,16 +497,18 @@ class _MenuRow extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.subtitle,
+    this.onTap,
   });
 
   final IconData icon;
   final Color iconColor;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Row(
         children: [
@@ -601,6 +540,15 @@ class _MenuRow extends StatelessWidget {
           const Icon(Icons.chevron_right, size: 18, color: AppColors.textLight),
         ],
       ),
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      child: content,
     );
   }
 }

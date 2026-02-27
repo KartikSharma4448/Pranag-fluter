@@ -173,6 +173,8 @@ class UserProfile {
     required this.name,
     required this.role,
     required this.phone,
+    required this.location,
+    required this.email,
     required this.membership,
     required this.totalCattle,
     required this.totalScans,
@@ -182,6 +184,8 @@ class UserProfile {
   final String name;
   final String role;
   final String phone;
+  final String location;
+  final String email;
   final String membership;
   final int totalCattle;
   final int totalScans;
@@ -191,6 +195,8 @@ class UserProfile {
     String? name,
     String? role,
     String? phone,
+    String? location,
+    String? email,
     String? membership,
     int? totalCattle,
     int? totalScans,
@@ -200,6 +206,8 @@ class UserProfile {
       name: name ?? this.name,
       role: role ?? this.role,
       phone: phone ?? this.phone,
+      location: location ?? this.location,
+      email: email ?? this.email,
       membership: membership ?? this.membership,
       totalCattle: totalCattle ?? this.totalCattle,
       totalScans: totalScans ?? this.totalScans,
@@ -212,6 +220,8 @@ class UserProfile {
       "name": name,
       "role": role,
       "phone": phone,
+      "location": location,
+      "email": email,
       "membership": membership,
       "totalCattle": totalCattle,
       "totalScans": totalScans,
@@ -224,6 +234,8 @@ class UserProfile {
       name: (json["name"] ?? "").toString(),
       role: (json["role"] ?? "").toString(),
       phone: (json["phone"] ?? "").toString(),
+      location: (json["location"] ?? "").toString(),
+      email: (json["email"] ?? "").toString(),
       membership: (json["membership"] ?? "").toString(),
       totalCattle: (json["totalCattle"] as num?)?.toInt() ?? 0,
       totalScans: (json["totalScans"] as num?)?.toInt() ?? 0,

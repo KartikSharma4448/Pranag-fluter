@@ -115,6 +115,8 @@ class MockData {
     name: "User",
     role: "Dairy Farmer",
     phone: "+919876543210",
+    location: "Not provided",
+    email: "Not provided",
     membership: "Premium Member",
     totalCattle: 4,
     totalScans: 12,

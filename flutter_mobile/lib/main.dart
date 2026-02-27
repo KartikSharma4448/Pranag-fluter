@@ -6,7 +6,8 @@ import "screens/tabs_shell.dart";
 import "state/app_state.dart";
 import "theme/app_colors.dart";
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const PranaGApp());
 }
 

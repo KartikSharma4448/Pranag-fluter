@@ -1,22 +1,17 @@
-import "dart:convert";
+import "dart:async";
 
 import "package:flutter/foundation.dart";
-import "package:shared_preferences/shared_preferences.dart";
 
 import "../data/mock_data.dart";
 import "../models/app_models.dart";
+import "../services/data/app_repository.dart";
 
 class AppState extends ChangeNotifier {
   AppState() {
     _initialize();
   }
 
-  static const String _kLoggedIn = "pranag_logged_in";
-  static const String _kCattle = "pranag_cattle";
-  static const String _kAlerts = "pranag_alerts";
-  static const String _kUser = "pranag_user";
-
-  SharedPreferences? _prefs;
+  final AppRepository _repo = AppRepository.instance;
   bool _isReady = false;
   bool _isLoggedIn = false;
   List<Cattle> _cattle = List<Cattle>.from(MockData.cattle);
@@ -35,8 +30,18 @@ class AppState extends ChangeNotifier {
 
   Future<void> _initialize() async {
     try {
-      _prefs = await SharedPreferences.getInstance();
-      _loadPersistedState();
+      await _repo.initialize();
+      await _repo.seedIfEmpty(
+        cattle: MockData.cattle,
+        alerts: MockData.alerts,
+        user: MockData.user,
+      );
+      _isLoggedIn = _repo.isLoggedIn;
+      if (_isLoggedIn) {
+        unawaited(_repo.saveDeviceToken());
+      }
+      await _refreshFromLocal();
+      unawaited(_repo.syncNow().then((_) => _refreshFromLocal()));
     } catch (_) {
       _cattle = List<Cattle>.from(MockData.cattle);
       _alerts = List<FarmAlert>.from(MockData.alerts);
@@ -48,62 +53,22 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void _loadPersistedState() {
-    final prefs = _prefs;
-    if (prefs == null) return;
+  Future<void> _refreshFromLocal() async {
+    final cattle = await _repo.getLocalCattle();
+    final alerts = await _repo.getLocalAlerts();
+    final profile = await _repo.getLocalProfile();
 
-    _isLoggedIn = prefs.getBool(_kLoggedIn) ?? false;
-
-    final cattleRaw = prefs.getString(_kCattle);
-    if (cattleRaw != null && cattleRaw.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(cattleRaw) as List<dynamic>;
-        _cattle = decoded
-            .map((e) => Cattle.fromJson(e as Map<String, dynamic>))
-            .toList();
-      } catch (_) {
-        _cattle = List<Cattle>.from(MockData.cattle);
-      }
+    if (cattle.isNotEmpty) {
+      _cattle = cattle;
     }
-
-    final alertsRaw = prefs.getString(_kAlerts);
-    if (alertsRaw != null && alertsRaw.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(alertsRaw) as List<dynamic>;
-        _alerts = decoded
-            .map((e) => FarmAlert.fromJson(e as Map<String, dynamic>))
-            .toList();
-      } catch (_) {
-        _alerts = List<FarmAlert>.from(MockData.alerts);
-      }
+    if (alerts.isNotEmpty) {
+      _alerts = alerts;
     }
-
-    final userRaw = prefs.getString(_kUser);
-    if (userRaw != null && userRaw.isNotEmpty) {
-      try {
-        _user = UserProfile.fromJson(jsonDecode(userRaw) as Map<String, dynamic>);
-      } catch (_) {
-        _user = MockData.user;
-      }
+    if (profile != null) {
+      _user = profile;
     }
-
     _recomputeUserStats();
-  }
-
-  void _persist() {
-    final prefs = _prefs;
-    if (prefs == null) return;
-
-    prefs.setBool(_kLoggedIn, _isLoggedIn);
-    prefs.setString(
-      _kCattle,
-      jsonEncode(_cattle.map((c) => c.toJson()).toList()),
-    );
-    prefs.setString(
-      _kAlerts,
-      jsonEncode(_alerts.map((a) => a.toJson()).toList()),
-    );
-    prefs.setString(_kUser, jsonEncode(_user.toJson()));
+    notifyListeners();
   }
 
   void _recomputeUserStats() {
@@ -123,29 +88,59 @@ class AppState extends ChangeNotifier {
     return "MZL-${scorePart.toStringAsFixed(1)}-$now";
   }
 
-  void login(String phone) {
-    _user = _user.copyWith(phone: "+91$phone");
+  Future<void> demoLogin() async {
+    await _repo.setOfflineLogin(true);
     _isLoggedIn = true;
-    _persist();
     notifyListeners();
   }
 
-  void demoLogin() {
+  Future<String> requestPhoneOtp(String phone) async {
+    final verificationId = await _repo.requestPhoneOtp("+91$phone");
+    if (verificationId == "AUTO") {
+      _isLoggedIn = true;
+      await _repo.saveDeviceToken();
+      unawaited(_repo.syncNow().then((_) => _refreshFromLocal()));
+      notifyListeners();
+    }
+    return verificationId;
+  }
+
+  Future<void> verifyPhoneOtp({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    await _repo.verifyPhoneOtp(
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
     _isLoggedIn = true;
-    _persist();
+    await _repo.saveDeviceToken();
+    unawaited(_repo.syncNow().then((_) => _refreshFromLocal()));
     notifyListeners();
   }
 
-  void logout() {
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    await _repo.signInWithEmail(email: email, password: password);
+    _isLoggedIn = true;
+    await _repo.saveDeviceToken();
+    unawaited(_repo.syncNow().then((_) => _refreshFromLocal()));
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    await _repo.signOut();
     _isLoggedIn = false;
-    _persist();
     notifyListeners();
   }
 
   void dismissAlert(String id) {
     _alerts = _alerts.where((a) => a.id != id).toList();
     _recomputeUserStats();
-    _persist();
+    unawaited(_repo.deleteAlert(id));
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
@@ -154,14 +149,16 @@ class AppState extends ChangeNotifier {
         .map((a) => a.id == id ? a.copyWith(read: true) : a)
         .toList();
     _recomputeUserStats();
-    _persist();
+    unawaited(_repo.markAlertRead(id, true));
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
   void removeCattle(String id) {
     _cattle = _cattle.where((c) => c.id != id).toList();
     _recomputeUserStats();
-    _persist();
+    unawaited(_repo.deleteCattle(id));
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
@@ -190,7 +187,8 @@ class AppState extends ChangeNotifier {
     );
     _cattle = [..._cattle, cattleItem];
     _recomputeUserStats();
-    _persist();
+    unawaited(_repo.upsertCattle(cattleItem));
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
@@ -205,7 +203,7 @@ class AppState extends ChangeNotifier {
 
   void incrementScanCount() {
     _user = _user.copyWith(totalScans: _user.totalScans + 1);
-    _persist();
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
@@ -231,30 +229,36 @@ class AppState extends ChangeNotifier {
     );
     _alerts = <FarmAlert>[newAlert, ..._alerts];
     _recomputeUserStats();
-    _persist();
+    unawaited(_repo.upsertAlert(newAlert));
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
   void updateCattle(Cattle updated) {
     _cattle = _cattle.map((c) => c.id == updated.id ? updated : c).toList();
     _recomputeUserStats();
-    _persist();
+    unawaited(_repo.upsertCattle(updated));
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 
   void updateUserProfile({
-    required String name,
-    required String role,
-    required String phone,
-    required String membership,
+    String? name,
+    String? role,
+    String? phone,
+    String? location,
+    String? email,
+    String? membership,
   }) {
     _user = _user.copyWith(
-      name: name,
-      role: role,
-      phone: phone,
-      membership: membership,
+      name: name ?? _user.name,
+      role: role ?? _user.role,
+      phone: phone ?? _user.phone,
+      location: location ?? _user.location,
+      email: email ?? _user.email,
+      membership: membership ?? _user.membership,
     );
-    _persist();
+    unawaited(_repo.upsertProfile(_user));
     notifyListeners();
   }
 }
