@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1088725983779",
+    "project_id": "pranag-ai",
+    "storage_bucket": "pranag-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1088725983779:android:1cbecca471177a6cdfc796",
+        "android_client_info": {
+          "package_name": "com.mekozza.pranagai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfYTZqOwVkiBc5PphJY60zhixSX6SQSBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

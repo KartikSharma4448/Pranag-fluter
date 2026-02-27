@@ -1,0 +1,125 @@
+import "../models/app_models.dart";
+
+class MockData {
+  static List<Cattle> cattle = [
+    Cattle(
+      id: "1",
+      name: "Lakshmi",
+      breed: "Gir",
+      age: 4,
+      muzzleId: "MZL-99.7-001",
+      healthScore: 95,
+      status: "healthy",
+      location: "Barn A-12",
+      lastScan: "2 hours ago",
+      digitalTwinActive: true,
+      alerts: 2,
+    ),
+    Cattle(
+      id: "2",
+      name: "Nandi",
+      breed: "Sahiwal",
+      age: 3,
+      muzzleId: "MZL-88.3-002",
+      healthScore: 72,
+      status: "attention",
+      location: "Barn B-05",
+      lastScan: "5 hours ago",
+      digitalTwinActive: true,
+      alerts: 1,
+    ),
+    Cattle(
+      id: "3",
+      name: "Kamadhenu",
+      breed: "Red Sindhi",
+      age: 5,
+      muzzleId: "MZL-91.2-003",
+      healthScore: 88,
+      status: "healthy",
+      location: "Barn A-08",
+      lastScan: "8 hours ago",
+      digitalTwinActive: true,
+      alerts: 0,
+    ),
+    Cattle(
+      id: "4",
+      name: "Gauri",
+      breed: "Tharparkar",
+      age: 2,
+      muzzleId: "MZL-76.5-004",
+      healthScore: 54,
+      status: "critical",
+      location: "Barn C-01",
+      lastScan: "1 hour ago",
+      digitalTwinActive: false,
+      alerts: 3,
+    ),
+  ];
+
+  static List<FarmAlert> alerts = [
+    FarmAlert(
+      id: "a1",
+      cattleId: "1",
+      cattleName: "Lakshmi",
+      cattleBreed: "Gir",
+      type: "critical",
+      title: "Early Mastitis Detection",
+      description:
+          "Acoustic AI detected abnormal vocalizations indicating early stage mastitis. Immediate veterinary consultation recommended.",
+      time: "2 hours ago",
+      read: false,
+      actionRequired: true,
+    ),
+    FarmAlert(
+      id: "a2",
+      cattleId: "2",
+      cattleName: "Nandi",
+      cattleBreed: "Sahiwal",
+      type: "warning",
+      title: "Decreased Rumination Activity",
+      description:
+          "Rumination levels have dropped by 12% over the past 24 hours. Monitor feeding patterns closely.",
+      time: "5 hours ago",
+      read: false,
+      actionRequired: true,
+    ),
+    FarmAlert(
+      id: "a3",
+      cattleId: "3",
+      cattleName: "Kamadhenu",
+      cattleBreed: "Red Sindhi",
+      type: "healthy",
+      title: "Health Scan Due",
+      description:
+          "It has been 24 hours since the last comprehensive health scan for this animal.",
+      time: "8 hours ago",
+      read: true,
+      actionRequired: false,
+    ),
+    FarmAlert(
+      id: "a4",
+      cattleId: "4",
+      cattleName: "Gauri",
+      cattleBreed: "Tharparkar",
+      type: "critical",
+      title: "Fever Detected",
+      description:
+          "Thermal analysis shows elevated body temperature of 103.5F. Immediate attention required.",
+      time: "1 hour ago",
+      read: false,
+      actionRequired: true,
+    ),
+  ];
+
+  static UserProfile user = UserProfile(
+    name: "User",
+    role: "Dairy Farmer",
+    phone: "+919876543210",
+    location: "Not provided",
+    email: "Not provided",
+    membership: "Premium Member",
+    totalCattle: 4,
+    totalScans: 12,
+    totalAlerts: 3,
+  );
+}
